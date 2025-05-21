@@ -6,7 +6,12 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Increase memory limit
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: ['error', 'warn', 'log'],
+    bodyParser: true,
+  });
+  
   const configService = app.get(ConfigService);
   
   // Log environment configuration
@@ -55,8 +60,26 @@ async function bootstrap() {
     },
   });
 
-  const port = process.env.PORT ?? 3001;
-  await app.listen(port, '0.0.0.0');
-  console.log(`Application is running on: http://0.0.0.0:${port}`);
+  const port = process.env.PORT || 3001;
+  try {
+    await app.listen(port, '0.0.0.0');
+    console.log(`Application is running on: http://0.0.0.0:${port}`);
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 }
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 bootstrap();
