@@ -50,14 +50,24 @@ export class FirebaseService implements OnModuleInit {
       // Initialize Firebase Admin only if not already initialized
       if (!admin.apps.length) {
         console.log('Initializing new Firebase app...'); // Debug log
+        
+        // Format the private key properly
+        const formattedPrivateKey = privateKey
+          .replace(/\\n/g, '\n')
+          .replace(/"/g, '')
+          .trim();
+
         this.firebaseApp = admin.initializeApp({
           credential: admin.credential.cert({
             projectId,
             clientEmail,
-            privateKey: privateKey.replace(/\\n/g, '\n'),
+            privateKey: formattedPrivateKey,
           }),
           storageBucket,
           databaseURL,
+          httpAgent: new (require('https').Agent)({
+            rejectUnauthorized: false // Only use this in development
+          })
         });
         console.log('Firebase app initialized successfully');
       } else {
